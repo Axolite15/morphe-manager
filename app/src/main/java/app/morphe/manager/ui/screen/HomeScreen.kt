@@ -79,6 +79,7 @@ fun HomeScreen(
     val sourcesLoadingText = stringResource(R.string.home_sources_are_loading)
     val manualSortHint = stringResource(R.string.home_app_sort_manual_hint)
     val otherAppsText = stringResource(R.string.home_other_apps)
+    val nothingToRepatchText = stringResource(R.string.batch_patch_nothing_outdated)
     val settingsLabel = stringResource(R.string.settings)
     val expertModeLabel = stringResource(R.string.settings_advanced_expert_mode)
 
@@ -243,6 +244,19 @@ fun HomeScreen(
     val startBatchPatch: (List<HomeAppItem>) -> Unit = { items ->
         openBatchQueue(items.map { it.batchTarget() })
     }
+    // The header's batch patching button and the re-patch alert, which lead to the same place: a
+    // queue that is patching or holds results, else the apps that can be re-patched, else a queue
+    // saved for later. With none of them there is nothing to patch, which is said instead
+    val openRepatch: () -> Unit = {
+        val run = batchRun
+        val saved = savedBatchQueue
+        when {
+            run != null && (run.isActive || run.hasOutcome) -> onStartBatchPatch(run.targets)
+            repatchableApps.isNotEmpty() -> startBatchPatch(repatchableApps)
+            saved != null -> openBatchQueue(saved.targets)
+            else -> messages.show(nothingToRepatchText)
+        }
+    }
 
     // Handle app info trigger (e.g. from mount replaced notification)
     LaunchedEffect(appInfoTriggerPackage) {
@@ -311,7 +325,7 @@ fun HomeScreen(
         // swiped one back
         repatchAvailable = AlertState.about(
             repatchableApps.takeIf { showRepatchNotice }.orEmpty().map { "${it.id}:${it.status}" }
-        ) { startBatchPatch(repatchableApps) },
+        ) { openRepatch() },
         // Reopened on its own apps, so the batch screen keeps the run instead of
         // planning a new one. A queue left by an earlier process is only stored
         batchQueue = BatchQueueAlertState(batchRun, savedBatchQueue) {
@@ -483,6 +497,7 @@ fun HomeScreen(
                                 homeViewModel.patchFlow.startOtherAppsFlow(otherAppsText)
                             }
                         },
+                        onRepatchClick = openRepatch,
                         onOpenSources = { openPage(MainPage.SOURCES) },
                         onRefreshGreeting = onRefresh,
                         onHideMoreAppsCard = { scope.launch { prefs.showMoreAppsCard.update(false) } }
@@ -491,6 +506,7 @@ fun HomeScreen(
                     state = sectionState,
                     bottomBarHeight = bottomBarHeight,
                     alerts = alerts,
+                    repatchCount = repatchableApps.size,
                     alertsHeight = { alertsHeight.value },
                     onboardingState = onboardingState,
                     onHeaderHeightChange = { pageHeaderHeights[MainPage.APPS] = it }

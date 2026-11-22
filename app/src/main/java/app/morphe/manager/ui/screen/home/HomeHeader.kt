@@ -49,12 +49,14 @@ import com.composables.icons.materialsymbols.rounded.*
 
 /**
  * Heads the apps page with the Morphe wordmark. Its controls bring back the alerts swiped aside,
- * while there are any, open the list's order and filter, patch an app the list does not hold from
- * its APK and search the list. While [reorder] is under way they give way to its own, see
- * [ReorderHeaderActions].
+ * while there are any, open batch patching, open the list's order and filter, patch an app the
+ * list does not hold from its APK and search the list. While [reorder] is under way they give way
+ * to its own, see [ReorderHeaderActions].
  *
  * @param sortEnabled Whether the list's options can be opened, which a selection under way holds off.
  * @param sortOpen Whether the list's options are docked under the list, which the button then closes.
+ * @param repatchCount How many apps can be re-patched, shown on the batch patching button while
+ *   there are any. The button stays either way, so batch patching is always one tap away.
  */
 @Composable
 internal fun HomeHeader(
@@ -65,6 +67,8 @@ internal fun HomeHeader(
     sortOpen: Boolean,
     onSortClick: () -> Unit,
     onPatchFileClick: () -> Unit,
+    repatchCount: Int,
+    onRepatchClick: () -> Unit,
     reorder: ListReorder? = null,
     // Set while the tour runs, which points at the button for other apps
     tour: OnboardingState? = null
@@ -124,6 +128,25 @@ internal fun HomeHeader(
                         style = TitleActionStyle.Neutral
                     )
                 }
+            }
+
+            // Always there, unlike the alert it repeats, with the number of apps waiting as a badge
+            val badgeColor = LocalAccent.current ?: MaterialTheme.colorScheme.primary
+            BadgedBox(
+                badge = {
+                    if (repatchCount > 0) {
+                        Badge(containerColor = badgeColor, contentColor = badgeColor.contrastingContent()) {
+                            Text(text = repatchCount.toString(), modifier = Modifier.clearAndSetSemantics {})
+                        }
+                    }
+                }
+            ) {
+                TitleAction(
+                    icon = MaterialSymbols.Rounded.Auto_fix_high,
+                    contentDescription = stringResource(R.string.shortcut_repatch_long),
+                    onClick = onRepatchClick,
+                    style = TitleActionStyle.Neutral
+                )
             }
 
             ListOptionsButton(

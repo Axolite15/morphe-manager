@@ -108,6 +108,7 @@ class HomeAppActions(
 @Stable
 class HomeChromeActions(
     val onOtherAppsClick: () -> Unit,
+    val onRepatchClick: () -> Unit,
     val onOpenSources: () -> Unit,
     val onRefreshGreeting: (() -> Unit)?,
     val onHideMoreAppsCard: () -> Unit
@@ -122,6 +123,7 @@ class HomeChromeActions(
  * @param bottomBarHeight Height of the navigation floating over the page, which the list ends clear of.
  * @param alerts The alerts of the main screen, those swiped aside brought back from the header.
  * @param alertsHeight How far down those alerts reach under the header, which the list starts below.
+ * @param repatchCount How many apps can be re-patched, badged on the header's batch patching button.
  * @param onHeaderHeightChange Told the header's height, for the alerts floating over the page below it.
  */
 @Composable
@@ -133,6 +135,7 @@ internal fun SectionsLayout(
     state: HomeAppsSectionState,
     bottomBarHeight: Dp,
     alerts: HomeAlerts,
+    repatchCount: Int,
     alertsHeight: () -> Dp = { 0.dp },
     onboardingState: OnboardingState? = null,
     onHeaderHeightChange: (Dp) -> Unit = {}
@@ -163,6 +166,8 @@ internal fun SectionsLayout(
                 sortOpen = state.isListOptionsOpen,
                 onSortClick = { state.isListOptionsOpen = !state.isListOptionsOpen },
                 onPatchFileClick = chromeActions.onOtherAppsClick,
+                repatchCount = repatchCount,
+                onRepatchClick = chromeActions.onRepatchClick,
                 reorder = footerBar.content?.listReorder(),
                 tour = onboardingState
             )
